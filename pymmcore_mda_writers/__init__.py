@@ -4,3 +4,5 @@ except ImportError:
     __version__ = "unknown"
 __author__ = "Ian Hunt-Isaak"
 __email__ = "ianhuntisaak@gmail.com"
+
+from ._writers import zarr_MDA_writer

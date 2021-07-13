@@ -6,4 +6,5 @@
 [![CI](https://github.com/ianhi/pymmcore-MDA-writers/workflows/ci/badge.svg)](https://github.com/ianhi/pymmcore-MDA-writers/actions)
 [![codecov](https://codecov.io/gh/ianhi/pymmcore-MDA-writers/branch/master/graph/badge.svg)](https://codecov.io/gh/ianhi/pymmcore-MDA-writers)
 
-MDA writers for pymmcore-plus
+MDA writer(s) for [pymmcore-plus](https://github.com/tlambert03/pymmcore-plus#pymmcore-plus)
+
