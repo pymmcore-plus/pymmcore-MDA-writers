@@ -50,5 +50,5 @@ class zarr_MDA_writer:
 
     def disconnect(self):
         "Disconnect this writer from processing any more events"
-        self._core.onFrame.disconnect(self._onMDAFrame)
-        self._core.frameReady.disconnect(self._onMDAStarted)
+        self._core.events.onFrame.disconnect(self._onMDAFrame)
+        self._core.events.frameReady.disconnect(self._onMDAStarted)
