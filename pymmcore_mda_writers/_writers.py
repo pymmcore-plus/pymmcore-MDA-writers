@@ -22,8 +22,8 @@ class zarr_MDA_writer:
         self._run_number = -1
         self._img_shape = img_shape
         self._dtype = dtype
-        self._core.sequenceStarted.connect(self._onMDAStarted)
-        self._core.frameReady.connect(self._onMDAFrame)
+        self._core.events.sequenceStarted.connect(self._onMDAStarted)
+        self._core.events.frameReady.connect(self._onMDAFrame)
         # TODO: add canceled, finished and maybe paused?
 
     def _onMDAStarted(self, sequence: MDASequence):
