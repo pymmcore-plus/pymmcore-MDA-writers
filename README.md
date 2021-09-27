@@ -7,4 +7,3 @@
 [![codecov](https://codecov.io/gh/ianhi/pymmcore-MDA-writers/branch/master/graph/badge.svg)](https://codecov.io/gh/ianhi/pymmcore-MDA-writers)
 
 MDA writer(s) for [pymmcore-plus](https://github.com/tlambert03/pymmcore-plus#pymmcore-plus)
-
