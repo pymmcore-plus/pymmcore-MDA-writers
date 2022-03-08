@@ -105,3 +105,5 @@ ENV/
 .vscode/
 
 tests/zarr*
+
+_version.py
