@@ -4,27 +4,50 @@ __all__ = [
 import numpy as np
 import zarr
 from useq import MDAEvent, MDASequence
+from pymmcore_plus import CMMCorePlus
+from pymmcore_plus.mda import PMDAEngine
+from typing import Optional
 
 
 class zarr_MDA_writer:
-    def __init__(self, core, store_name, img_shape=(512, 512), dtype=np.uint8):
+    def __init__(
+        self, store_name, img_shape, dtype, core: CMMCorePlus = None
+    ):
         """
         Parameters
         ----------
-        core : MMCorePlus
         store_name : str
             Should accept .format(run=INT)
         img_shape : (int, int)
         dtype : numpy dtype
+        core : CMMCorePlus, optional
+            If not given the current core instance will be used.
         """
-        self._core = core
-        self._store_name = store_name
+        self._core = core or CMMCorePlus.instance()
+        self._store_name = str(store_name)
         self._run_number = -1
         self._img_shape = img_shape
         self._dtype = dtype
-        self._core.events.sequenceStarted.connect(self._onMDAStarted)
-        self._core.events.frameReady.connect(self._onMDAFrame)
+        self._on_mda_engine_registered(core.mda, None)
+        self._core.events.mdaEngineRegistered.connect(self._on_mda_engine_registered)
         # TODO: add canceled, finished and maybe paused?
+
+    def _on_mda_engine_registered(
+        self, newEngine: PMDAEngine, oldEngine: Optional[PMDAEngine] = None
+    ):
+        if oldEngine:
+            self._disconnect(oldEngine)
+        newEngine.events.sequenceStarted.connect(self._onMDAStarted)
+        newEngine.events.frameReady.connect(self._onMDAFrame)
+
+    def _disconnect(self, engine):
+        engine.events.sequenceStarted.disconnect(self._onMDAStarted)
+        engine.events.frameReady.disconnect(self._onMDAFrame)
+
+
+    def disconnect(self):
+        "Disconnect this writer from processing any more events"
+        self._disconnect(self._core.mda)
 
     def _onMDAStarted(self, sequence: MDASequence):
         self._current_sequence = sequence
@@ -48,7 +71,3 @@ class zarr_MDA_writer:
     def _onMDAFrame(self, img: np.ndarray, event: MDAEvent):
         self._z[tuple(event.index[a] for a in self._axis_order)] = img
 
-    def disconnect(self):
-        "Disconnect this writer from processing any more events"
-        self._core.events.sequenceStarted.disconnect(self._onMDAFrame)
-        self._core.events.frameReady.disconnect(self._onMDAStarted)
