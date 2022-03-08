@@ -1,7 +1,7 @@
+from pathlib import Path
+
 import pytest
 from pymmcore_plus import CMMCorePlus
-
-from pathlib import Path
 
 
 @pytest.fixture

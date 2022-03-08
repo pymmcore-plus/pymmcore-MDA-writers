@@ -1,18 +1,17 @@
 __all__ = [
     "zarr_MDA_writer",
 ]
+from typing import Optional
+
 import numpy as np
 import zarr
-from useq import MDAEvent, MDASequence
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
-from typing import Optional
+from useq import MDAEvent, MDASequence
 
 
 class zarr_MDA_writer:
-    def __init__(
-        self, store_name, img_shape, dtype, core: CMMCorePlus = None
-    ):
+    def __init__(self, store_name, img_shape, dtype, core: CMMCorePlus = None):
         """
         Parameters
         ----------
@@ -44,7 +43,6 @@ class zarr_MDA_writer:
         engine.events.sequenceStarted.disconnect(self._onMDAStarted)
         engine.events.frameReady.disconnect(self._onMDAFrame)
 
-
     def disconnect(self):
         "Disconnect this writer from processing any more events"
         self._disconnect(self._core.mda)
@@ -70,4 +68,3 @@ class zarr_MDA_writer:
 
     def _onMDAFrame(self, img: np.ndarray, event: MDAEvent):
         self._z[tuple(event.index[a] for a in self._axis_order)] = img
-
