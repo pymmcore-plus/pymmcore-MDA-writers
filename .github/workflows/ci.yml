@@ -38,7 +38,7 @@ jobs:
         run: python -m pymmcore_plus.install
 
       - name: Test
-        run: pytest -v --color=yes --cov=pymmcore_plus --cov-report=xml
+        run: pytest -v --color=yes --cov=pymmcore_mda_writers --cov-report=xml
 
       - name: Coverage
         uses: codecov/codecov-action@v2
