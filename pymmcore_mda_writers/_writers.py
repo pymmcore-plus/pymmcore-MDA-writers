@@ -1,9 +1,10 @@
 __all__ = [
     "BaseWriter",
+    "SimpleMultiFileTiffWriter",
     "ZarrMDAWriter",
 ]
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -11,6 +12,11 @@ import zarr
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
 from useq import MDAEvent, MDASequence
+
+try:
+    import tifffile
+except ModuleNotFoundError:
+    tifffile = None
 
 
 class BaseWriter:
@@ -43,8 +49,17 @@ class BaseWriter:
         self._disconnect(self._core.mda)
 
     @staticmethod
-    def get_unique_folder(folder_base_name: Union[str, Path]) -> Path:
-        """Get a unique foldername of the form '{folder_base_name}_{i}'"""
+    def get_unique_folder(folder_base_name: Union[str, Path], create=False) -> Path:
+        """
+        Get a unique foldername of the form '{folder_base_name}_{i}
+
+        Parameters
+        ----------
+        folder_base_name : str or Path
+            The folder name in which to put data
+        create : bool, default False
+            Whether to create the folder.
+        '"""
         base_path = Path.cwd()
         folder = str(folder_base_name)
         path: Path = base_path / folder
@@ -52,6 +67,8 @@ class BaseWriter:
         while path.exists():
             path = base_path / (folder + f"_{i}")
             i += 1
+        if create:
+            path.mkdir(parents=True)
         return path
 
     @staticmethod
@@ -63,6 +80,39 @@ class BaseWriter:
         event = next(seq.iter_events())
         event_axes = list(event.index.keys())
         return tuple(a for a in seq.axis_order if a in event_axes)
+
+    @staticmethod
+    def event_to_index(axis_order: Sequence[str], event: MDAEvent) -> Tuple[int, ...]:
+        return tuple(event.index[a] for a in axis_order)
+
+
+class SimpleMultiFileTiffWriter(BaseWriter):
+    def __init__(
+        self, data_folder_name: Union[str, Path], core: CMMCorePlus = None
+    ) -> None:
+        if tifffile is None:
+            raise ValueError(
+                "This writer requires tifffile to be installed. `pip install tifffile`"
+            )
+        super().__init__(core)
+        self._data_folder_name = data_folder_name
+
+    def _onMDAStarted(self, sequence: MDASequence) -> None:
+        self._path = self.get_unique_folder(self._data_folder_name, create=True)
+        self._axis_order = self.sequence_axis_order(sequence)
+
+    def _onMDAFrame(self, img: np.ndarray, event: MDASequence) -> None:
+        index = self.event_to_index(self._axis_order, event)
+        name = (
+            "_".join(
+                [
+                    self._axis_order[i] + f"{index[i]}".zfill(3)
+                    for i in range(len(index))
+                ]
+            )
+            + ".tiff"
+        )
+        tifffile.imwrite(self._path / name, img)
 
 
 class ZarrMDAWriter(BaseWriter):
@@ -102,4 +152,4 @@ class ZarrMDAWriter(BaseWriter):
         self._z.attrs["axis_order"] = sequence.axis_order + "yx"
 
     def _onMDAFrame(self, img: np.ndarray, event: MDAEvent):
-        self._z[tuple(event.index[a] for a in self._axis_order)] = img
+        self._z[self.event_to_index(self._axis_order, event)] = img

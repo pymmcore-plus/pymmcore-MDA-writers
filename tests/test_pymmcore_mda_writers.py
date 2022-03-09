@@ -2,15 +2,24 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 import zarr
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import MDAEngine
 from useq import MDASequence
 
-from pymmcore_mda_writers import zarr_MDA_writer
+from pymmcore_mda_writers import SimpleMultiFileTiffWriter, ZarrMDAWriter
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
+
+
+@pytest.fixture
+def core() -> CMMCorePlus:
+    mmc = CMMCorePlus.instance()
+    if len(mmc.getLoadedDevices()) < 2:
+        mmc.loadSystemConfiguration(str(Path(__file__).parent / "test-config.cfg"))
+    return mmc
 
 
 def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
@@ -20,7 +29,7 @@ def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
         channels=[{"config": "DAPI", "exposure": 1}],
     )
 
-    writer = zarr_MDA_writer(  # noqa
+    writer = ZarrMDAWriter(  # noqa
         tmp_path / "zarr_{run}.zarr", (512, 512), dtype=np.uint16, core=core
     )
     new_engine = MDAEngine(core)
@@ -32,3 +41,38 @@ def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
     assert arr.shape == (1, 1, 4, 512, 512)
     for i in range(4):
         assert not np.all(arr[0, 0, i] == 0)
+
+
+def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
+    mda = MDASequence(
+        time_plan={"interval": 0.1, "loops": 2},
+        stage_positions=[(1, 1, 1)],
+        z_plan={"range": 3, "step": 1},
+        channels=[{"config": "DAPI", "exposure": 1}],
+    )
+    writer = SimpleMultiFileTiffWriter(str(tmp_path / "mda_data"), core=core)  # noqa
+
+    # run twice to check that we aren't overwriting files
+    with qtbot.waitSignal(core.mda.events.sequenceFinished):
+        core.run_mda(mda)
+    with qtbot.waitSignal(core.mda.events.sequenceFinished):
+        core.run_mda(mda)
+
+    # check that the correct folders/files were generated
+    data_folders = set(tmp_path.glob("mda_data*"))
+    assert {tmp_path / "mda_data", tmp_path / "mda_data_1"}.issubset(set(data_folders))
+    expected = [
+        Path("t000_p000_c000_z000.tiff"),
+        Path("t001_p000_c000_z000.tiff"),
+        Path("t001_p000_c000_z002.tiff"),
+        Path("t001_p000_c000_z001.tiff"),
+        Path("t000_p000_c000_z001.tiff"),
+        Path("t001_p000_c000_z003.tiff"),
+        Path("t000_p000_c000_z002.tiff"),
+        Path("t000_p000_c000_z003.tiff"),
+    ]
+    actual_1 = list((tmp_path / "mda_data").glob("*"))
+    actual_2 = list((tmp_path / "mda_data_1").glob("*"))
+    for e in expected:
+        assert tmp_path / "mda_data" / e in actual_1
+        assert tmp_path / "mda_data_1" / e in actual_2
