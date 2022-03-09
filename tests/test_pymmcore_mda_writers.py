@@ -30,17 +30,23 @@ def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
     )
 
     writer = ZarrMDAWriter(  # noqa
-        tmp_path / "zarr_{run}.zarr", (512, 512), dtype=np.uint16, core=core
+        tmp_path / "zarr_data", (512, 512), dtype=np.uint16, core=core
     )
     new_engine = MDAEngine(core)
     with qtbot.waitSignal(core.events.mdaEngineRegistered):
         core.register_mda_engine(new_engine)
     with qtbot.waitSignal(core.mda.events.sequenceFinished):
         core.run_mda(mda)
-    arr = np.asarray(zarr.open(tmp_path / "zarr_0.zarr"))
-    assert arr.shape == (1, 1, 4, 512, 512)
+    with qtbot.waitSignal(core.mda.events.sequenceFinished):
+        core.run_mda(mda)
+    arr1 = np.asarray(zarr.open(tmp_path / "zarr_data_1.zarr"))
+    arr2 = np.asarray(zarr.open(tmp_path / "zarr_data_2.zarr"))
+    print(list(tmp_path.glob("*")))
+    assert arr1.shape == (1, 1, 4, 512, 512)
+    assert arr2.shape == (1, 1, 4, 512, 512)
     for i in range(4):
-        assert not np.all(arr[0, 0, i] == 0)
+        assert not np.all(arr1[0, 0, i] == 0)
+        assert not np.all(arr2[0, 0, i] == 0)
 
 
 def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
