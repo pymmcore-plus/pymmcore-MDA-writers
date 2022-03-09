@@ -60,7 +60,9 @@ def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
 
     # check that the correct folders/files were generated
     data_folders = set(tmp_path.glob("mda_data*"))
-    assert {tmp_path / "mda_data", tmp_path / "mda_data_1"}.issubset(set(data_folders))
+    assert {tmp_path / "mda_data_1", tmp_path / "mda_data_2"}.issubset(
+        set(data_folders)
+    )
     expected = [
         Path("t000_p000_c000_z000.tiff"),
         Path("t001_p000_c000_z000.tiff"),
@@ -71,8 +73,8 @@ def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
         Path("t000_p000_c000_z002.tiff"),
         Path("t000_p000_c000_z003.tiff"),
     ]
-    actual_1 = list((tmp_path / "mda_data").glob("*"))
-    actual_2 = list((tmp_path / "mda_data_1").glob("*"))
+    actual_1 = list((tmp_path / "mda_data_1").glob("*"))
+    actual_2 = list((tmp_path / "mda_data_2").glob("*"))
     for e in expected:
-        assert tmp_path / "mda_data" / e in actual_1
-        assert tmp_path / "mda_data_1" / e in actual_2
+        assert tmp_path / "mda_data_1" / e in actual_1
+        assert tmp_path / "mda_data_2" / e in actual_2

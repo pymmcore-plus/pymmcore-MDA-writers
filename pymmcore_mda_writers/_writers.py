@@ -62,8 +62,8 @@ class BaseWriter:
         '"""
         base_path = Path.cwd()
         folder = str(folder_base_name)
-        path: Path = base_path / folder
         i = 1
+        path = base_path / (folder + f"_{i}")
         while path.exists():
             path = base_path / (folder + f"_{i}")
             i += 1
