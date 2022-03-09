@@ -33,7 +33,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[testing]
           pip install pyside2
-          pip install @git+https://github.com/tlambert03/pymmcore-plus
+          pip install git+https://github.com/tlambert03/pymmcore-plus
 
       - name: Install Micro-Manager
         run: python -m pymmcore_plus.install
