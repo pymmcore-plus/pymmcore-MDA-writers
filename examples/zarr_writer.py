@@ -5,6 +5,8 @@ This writer will write a single zarr file.
 That file can then be opened with zarr.open
 """
 
+import json
+
 import numpy as np
 import zarr
 from pymmcore_plus import CMMCorePlus
@@ -44,5 +46,15 @@ th.join()
 # If you run  may need to increment
 run_1 = zarr.open("data/zarr_writer_example/run_1.zarr")
 run_2 = zarr.open("data/zarr_writer_example/run_2.zarr")
+
+
 print(run_2)
+
+# metadata as well as the original MDASequence are stored
+# in the zarr `.attrs`
+
 print(run_2.attrs.asdict())
+
+# you can fully reconstruct the original sequence like so
+saved_sequence_as_useq = MDASequence(**json.loads(run_2.attrs["useq-sequence"]))
+print(saved_sequence_as_useq)
