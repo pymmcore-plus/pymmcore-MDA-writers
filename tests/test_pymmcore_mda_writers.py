@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -8,7 +9,7 @@ from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import MDAEngine
 from useq import MDASequence
 
-from pymmcore_mda_writers import SimpleMultiFileTiffWriter, ZarrWriter
+from pymmcore_mda_writers import BaseWriter, SimpleMultiFileTiffWriter, ZarrWriter
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
@@ -83,3 +84,36 @@ def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
     for e in expected:
         assert tmp_path / "mda_data_1" / e in actual_1
         assert tmp_path / "mda_data_2" / e in actual_2
+
+
+def test_missing_deps():
+    with patch("pymmcore_mda_writers._writers.tifffile", None):
+        with pytest.raises(ValueError) as e:
+            SimpleMultiFileTiffWriter("blarg")
+        assert "requires tifffile to be installed" in str(e)
+    with patch("pymmcore_mda_writers._writers.zarr", None):
+        with pytest.raises(ValueError) as e:
+            ZarrWriter("blarg", (512, 512), np.uint16)
+        assert "requires zarr to be installed" in str(e)
+
+
+def test_deregistration(core: CMMCorePlus, qtbot: "QtBot"):
+    mda = MDASequence(
+        stage_positions=[(1, 1, 1)],
+        time_plan={"interval": 0.1, "loops": 3},
+        channels=[{"config": "DAPI", "exposure": 1}],
+    )
+
+    writer = BaseWriter(core)
+    writer._disconnect(core.mda)
+    writer._onMDAFrame = MagicMock()
+    writer._on_mda_engine_registered(core.mda, None)
+    new_engine = MDAEngine(core)
+    with qtbot.waitSignal(core.events.mdaEngineRegistered):
+        core.register_mda_engine(new_engine)
+    with qtbot.waitSignal(core.mda.events.sequenceFinished):
+        core.run_mda(mda)
+    writer.disconnect()
+    with qtbot.waitSignal(core.mda.events.sequenceFinished):
+        core.run_mda(mda)
+    assert writer._onMDAFrame.call_count == 3

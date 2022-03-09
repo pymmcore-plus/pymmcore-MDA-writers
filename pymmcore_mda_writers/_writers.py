@@ -33,7 +33,7 @@ class BaseWriter:
         ...
 
     def _onMDAFrame(self, img: np.ndarray, event: MDAEvent):
-        ...
+        ...  # pragma: no cover
 
     def _on_mda_engine_registered(
         self, newEngine: PMDAEngine, oldEngine: Optional[PMDAEngine] = None
