@@ -63,12 +63,12 @@ class BaseWriter:
         create : bool, default False
             Whether to create the folder.
         '"""
-        base_path = Path.cwd()
-        folder = str(folder_base_name)
+        folder = Path(folder_base_name).resolve()
+        stem = str(folder.stem)
         i = 1
-        path = base_path / (folder + f"_{i}")
+        path = folder.parent / (stem + f"_{i}")
         while path.exists():
-            path = base_path / (folder + f"_{i}")
+            path = Path(str(folder) + f"_{i}")
             i += 1
         if create:
             path.mkdir(parents=True)
