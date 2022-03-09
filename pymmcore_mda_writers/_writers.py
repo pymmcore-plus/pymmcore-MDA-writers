@@ -8,7 +8,6 @@ from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
-import zarr
 from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import PMDAEngine
 from useq import MDAEvent, MDASequence
@@ -17,6 +16,10 @@ try:
     import tifffile
 except ModuleNotFoundError:
     tifffile = None
+try:
+    import zarr
+except ModuleNotFoundError:
+    zarr = None
 
 
 class BaseWriter:
@@ -92,7 +95,8 @@ class SimpleMultiFileTiffWriter(BaseWriter):
     ) -> None:
         if tifffile is None:
             raise ValueError(
-                "This writer requires tifffile to be installed. `pip install tifffile`"
+                "This writer requires tifffile to be installed. "
+                "Try: `pip install tifffile`"
             )
         super().__init__(core)
         self._data_folder_name = data_folder_name
@@ -133,7 +137,12 @@ class ZarrMDAWriter(BaseWriter):
         core : CMMCorePlus, optional
             If not given the current core instance will be used.
         """
+        if zarr is None:
+            raise ValueError(
+                "This writer requires zarr to be installed. Try: `pip install zarr`"
+            )
         super().__init__(core)
+
         self._store_name = str(store_name)
         self._run_number = -1
         self._img_shape = img_shape
