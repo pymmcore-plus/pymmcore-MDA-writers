@@ -117,6 +117,8 @@ class SimpleMultiFileTiffWriter(BaseWriter):
     def _onMDAStarted(self, sequence: MDASequence) -> None:
         self._path = self.get_unique_folder(self._data_folder_name, create=True)
         self._axis_order = self.sequence_axis_order(sequence)
+        with open(self._path / "useq-sequence.json", "w") as f:
+            f.write(sequence.json())
 
     def _onMDAFrame(self, img: np.ndarray, event: MDASequence) -> None:
         index = self.event_to_index(self._axis_order, event)
@@ -173,6 +175,7 @@ class ZarrWriter(BaseWriter):
             dtype=self._dtype,
         )
         self._z.attrs["axis_order"] = sequence.axis_order + "yx"
+        self._z.attrs["useq-sequence"] = sequence.json()
 
     def _onMDAFrame(self, img: np.ndarray, event: MDAEvent):
         self._z[self.event_to_index(self._axis_order, event)] = img

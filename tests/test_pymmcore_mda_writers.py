@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -25,6 +26,7 @@ def core() -> CMMCorePlus:
 
 def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
     mda = MDASequence(
+        metadata={"blah": "blah blah blah"},
         stage_positions=[(1, 1, 1)],
         z_plan={"range": 3, "step": 1},
         channels=[{"config": "DAPI", "exposure": 1}],
@@ -40,17 +42,23 @@ def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
         core.run_mda(mda)
     with qtbot.waitSignal(core.mda.events.sequenceFinished):
         core.run_mda(mda)
-    arr1 = np.asarray(zarr.open(tmp_path / "zarr_data_1.zarr"))
-    arr2 = np.asarray(zarr.open(tmp_path / "zarr_data_2.zarr"))
+    run1 = zarr.open(tmp_path / "zarr_data_1.zarr")
+    arr1 = np.asarray(run1)
+    run2 = zarr.open(tmp_path / "zarr_data_2.zarr")
+    arr2 = np.asarray(run2)
     assert arr1.shape == (1, 1, 4, 512, 512)
     assert arr2.shape == (1, 1, 4, 512, 512)
     for i in range(4):
         assert not np.all(arr1[0, 0, i] == 0)
         assert not np.all(arr2[0, 0, i] == 0)
+    attrs = run2.attrs.asdict()
+    assert "tpczyx" == attrs["axis_order"]
+    assert mda == MDASequence(**json.loads(attrs["useq-sequence"]))
 
 
 def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
     mda = MDASequence(
+        metadata={"blah": "blah blah blah"},
         time_plan={"interval": 0.1, "loops": 2},
         stage_positions=[(1, 1, 1)],
         z_plan={"range": 3, "step": 1},
@@ -84,6 +92,9 @@ def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
     for e in expected:
         assert tmp_path / "mda_data_1" / e in actual_1
         assert tmp_path / "mda_data_2" / e in actual_2
+    with open(tmp_path / "mda_data_1" / "useq-sequence.json") as f:
+        seq = MDASequence(**json.load(f))
+    assert seq == mda
 
 
 def test_missing_deps():
