@@ -8,7 +8,7 @@ from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import MDAEngine
 from useq import MDASequence
 
-from pymmcore_mda_writers import SimpleMultiFileTiffWriter, ZarrMDAWriter
+from pymmcore_mda_writers import SimpleMultiFileTiffWriter, ZarrWriter
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
@@ -29,7 +29,7 @@ def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
         channels=[{"config": "DAPI", "exposure": 1}],
     )
 
-    writer = ZarrMDAWriter(  # noqa
+    writer = ZarrWriter(  # noqa
         tmp_path / "zarr_data", (512, 512), dtype=np.uint16, core=core
     )
     new_engine = MDAEngine(core)

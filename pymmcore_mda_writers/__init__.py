@@ -5,11 +5,11 @@ except ImportError:
 __author__ = "Ian Hunt-Isaak"
 __email__ = "ianhuntisaak@gmail.com"
 
-from ._writers import BaseWriter, SimpleMultiFileTiffWriter, ZarrMDAWriter
+from ._writers import BaseWriter, SimpleMultiFileTiffWriter, ZarrWriter
 
 __all__ = [
     "__version__",
     "BaseWriter",
     "SimpleMultiFileTiffWriter",
-    "ZarrMDAWriter",
+    "ZarrWriter",
 ]

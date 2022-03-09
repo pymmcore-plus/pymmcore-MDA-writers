@@ -1,7 +1,7 @@
 __all__ = [
     "BaseWriter",
     "SimpleMultiFileTiffWriter",
-    "ZarrMDAWriter",
+    "ZarrWriter",
 ]
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
@@ -132,7 +132,7 @@ class SimpleMultiFileTiffWriter(BaseWriter):
         tifffile.imwrite(self._path / name, img)
 
 
-class ZarrMDAWriter(BaseWriter):
+class ZarrWriter(BaseWriter):
     def __init__(
         self,
         store_name: Union[str, Path],
