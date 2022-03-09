@@ -41,7 +41,6 @@ def test_engine_registration(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
         core.run_mda(mda)
     arr1 = np.asarray(zarr.open(tmp_path / "zarr_data_1.zarr"))
     arr2 = np.asarray(zarr.open(tmp_path / "zarr_data_2.zarr"))
-    print(list(tmp_path.glob("*")))
     assert arr1.shape == (1, 1, 4, 512, 512)
     assert arr2.shape == (1, 1, 4, 512, 512)
     for i in range(4):
