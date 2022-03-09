@@ -6,10 +6,10 @@
 [![Test](https://github.com/ianhi/pymmcore-MDA-writers/actions/workflows/ci.yml/badge.svg)](https://github.com/ianhi/mpl-interactions/actions/)
 [![codecov](https://codecov.io/gh/ianhi/pymmcore-MDA-writers/branch/main/graph/badge.svg)](https://codecov.io/gh/ianhi/pymmcore-MDA-writers)
 
-This package provides writers for [pymmcore-plus]. At the time of writing pymmc+ provides hooks for saving images but does not implement
+This package provides writers for [pymmcore-plus](https://pymmcore-plus.readthedocs.io). At the time of writing pymmc+ provides hooks for saving images but does not implement
 any mechanism for saving image (check in https://github.com/tlambert03/pymmcore-plus/pull/29 for updates). Currently provided are:
 
-1. A simple multifile tiff writer - can be loaded with `tiffffile`
+1. A simple multifile tiff writer - can be loaded with `tifffile`
 2. A simple zarr writer - not ome-zarr
 
 ```bash
