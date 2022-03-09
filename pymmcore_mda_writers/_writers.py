@@ -1,7 +1,7 @@
 __all__ = [
     "BaseWriter",
     "SimpleMultiFileTiffWriter",
-    "ZarrMDAWriter",
+    "ZarrWriter",
 ]
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
@@ -52,7 +52,11 @@ class BaseWriter:
         self._disconnect(self._core.mda)
 
     @staticmethod
-    def get_unique_folder(folder_base_name: Union[str, Path], create=False) -> Path:
+    def get_unique_folder(
+        folder_base_name: Union[str, Path],
+        suffix: Union[str, Path] = None,
+        create: bool = False,
+    ) -> Path:
         """
         Get a unique foldername of the form '{folder_base_name}_{i}
 
@@ -60,16 +64,25 @@ class BaseWriter:
         ----------
         folder_base_name : str or Path
             The folder name in which to put data
+        suffix : str or Path
+            If given, to be used as the path suffix. e.g. `.zarr`
         create : bool, default False
             Whether to create the folder.
         '"""
-        base_path = Path.cwd()
-        folder = str(folder_base_name)
+        folder = Path(folder_base_name).resolve()
+        stem = str(folder.stem)
+
+        def new_path(i):
+            path = folder.parent / (stem + f"_{i}")
+            if suffix:
+                return path.with_suffix(suffix)
+            return path
+
         i = 1
-        path = base_path / (folder + f"_{i}")
+        path = new_path(i)
         while path.exists():
-            path = base_path / (folder + f"_{i}")
             i += 1
+            path = new_path(i)
         if create:
             path.mkdir(parents=True)
         return path
@@ -119,7 +132,7 @@ class SimpleMultiFileTiffWriter(BaseWriter):
         tifffile.imwrite(self._path / name, img)
 
 
-class ZarrMDAWriter(BaseWriter):
+class ZarrWriter(BaseWriter):
     def __init__(
         self,
         store_name: Union[str, Path],
@@ -144,16 +157,17 @@ class ZarrMDAWriter(BaseWriter):
         super().__init__(core)
 
         self._store_name = str(store_name)
-        self._run_number = -1
         self._img_shape = img_shape
         self._dtype = dtype
 
     def _onMDAStarted(self, sequence: MDASequence):
         self._axis_order = self.sequence_axis_order(sequence)
 
-        self._run_number += 1
+        name = self.get_unique_folder(self._store_name, suffix=".zarr")
+        assert isinstance(name, (Path, str))
         self._z = zarr.open(
-            self._store_name.format(run=self._run_number),
+            name,
+            # self._store_name.format(run=self._run_number),
             mode="w",
             shape=sequence.shape + self._img_shape,
             dtype=self._dtype,
