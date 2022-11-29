@@ -3,6 +3,7 @@ __all__ = [
     "SimpleMultiFileTiffWriter",
     "ZarrWriter",
 ]
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
@@ -131,7 +132,11 @@ class SimpleMultiFileTiffWriter(BaseWriter):
             )
             + ".tiff"
         )
-        tifffile.imwrite(self._path / name, img)
+        tifffile.imwrite(
+            self._path / name,
+            img,
+            metadata={"event": event.json(), "time": str(datetime.now())},
+        )
 
 
 class ZarrWriter(BaseWriter):
