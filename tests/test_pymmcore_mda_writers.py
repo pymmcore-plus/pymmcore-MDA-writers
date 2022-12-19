@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -10,7 +10,7 @@ from pymmcore_plus import CMMCorePlus
 from pymmcore_plus.mda import MDAEngine
 from useq import MDASequence
 
-from pymmcore_mda_writers import BaseWriter, SimpleMultiFileTiffWriter, ZarrWriter
+from pymmcore_mda_writers import SimpleMultiFileTiffWriter, ZarrWriter
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
@@ -68,9 +68,9 @@ def test_tiff_writer(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
 
     # run twice to check that we aren't overwriting files
     with qtbot.waitSignal(core.mda.events.sequenceFinished):
-        core.run_mda(mda)
+        core.run_mda(mda).join()
     with qtbot.waitSignal(core.mda.events.sequenceFinished):
-        core.run_mda(mda)
+        core.run_mda(mda).join()
 
     # check that the correct folders/files were generated
     data_folders = set(tmp_path.glob("mda_data*"))
@@ -108,23 +108,19 @@ def test_missing_deps():
         assert "requires zarr to be installed" in str(e)
 
 
-def test_deregistration(core: CMMCorePlus, qtbot: "QtBot"):
+def test_disconnect(core: CMMCorePlus, tmp_path: Path, qtbot: "QtBot"):
     mda = MDASequence(
         stage_positions=[(1, 1, 1)],
         time_plan={"interval": 0.1, "loops": 3},
         channels=[{"config": "DAPI", "exposure": 1}],
     )
 
-    writer = BaseWriter(core)
-    writer._disconnect(core.mda)
-    writer._onMDAFrame = MagicMock()
-    writer._on_mda_engine_registered(core.mda, None)
-    new_engine = MDAEngine(core)
-    with qtbot.waitSignal(core.events.mdaEngineRegistered):
-        core.register_mda_engine(new_engine)
+    writer = SimpleMultiFileTiffWriter(tmp_path / "mda_data", core)
     with qtbot.waitSignal(core.mda.events.sequenceFinished):
-        core.run_mda(mda)
+        core.run_mda(mda).join()
     writer.disconnect()
     with qtbot.waitSignal(core.mda.events.sequenceFinished):
         core.run_mda(mda)
-    assert writer._onMDAFrame.call_count == 3
+    data_folders = set(tmp_path.glob("mda_data*"))
+    assert len(data_folders) == 1
+    # assert writer._onMDAFrame.call_count == 3
