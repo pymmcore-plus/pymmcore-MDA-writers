@@ -4,7 +4,7 @@ __all__ = [
     "ZarrWriter",
 ]
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Union
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -25,8 +25,8 @@ except ModuleNotFoundError:
 class BaseWriter:
     def __init__(self, core: CMMCorePlus = None) -> None:
         self._core = core or CMMCorePlus.instance()
-        self._on_mda_engine_registered(self._core.mda, None)
-        self._core.events.mdaEngineRegistered.connect(self._on_mda_engine_registered)
+        self._core.mda.events.sequenceStarted.connect(self._onMDAStarted)
+        self._core.mda.events.frameReady.connect(self._onMDAFrame)
         # TODO add paused and finished events
 
     def _onMDAStarted(self, sequence: MDASequence):
@@ -35,21 +35,14 @@ class BaseWriter:
     def _onMDAFrame(self, img: np.ndarray, event: MDAEvent):
         ...  # pragma: no cover
 
-    def _on_mda_engine_registered(
-        self, newEngine: PMDAEngine, oldEngine: Optional[PMDAEngine] = None
-    ):
-        if oldEngine:
-            self._disconnect(oldEngine)
-        newEngine.events.sequenceStarted.connect(self._onMDAStarted)
-        newEngine.events.frameReady.connect(self._onMDAFrame)
-
     def _disconnect(self, engine: PMDAEngine):
         engine.events.sequenceStarted.disconnect(self._onMDAStarted)
         engine.events.frameReady.disconnect(self._onMDAFrame)
 
     def disconnect(self):
         "Disconnect this writer from processing any more events"
-        self._disconnect(self._core.mda)
+        self._core.mda.events.sequenceStarted.disconnect(self._onMDAStarted)
+        self._core.mda.events.frameReady.disconnect(self._onMDAFrame)
 
     @staticmethod
     def get_unique_folder(
