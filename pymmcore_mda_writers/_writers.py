@@ -29,11 +29,9 @@ class BaseWriter:
         self._core.mda.events.frameReady.connect(self._onMDAFrame)
         # TODO add paused and finished events
 
-    def _onMDAStarted(self, sequence: MDASequence):
-        ...
+    def _onMDAStarted(self, sequence: MDASequence): ...
 
-    def _onMDAFrame(self, img: np.ndarray, event: MDAEvent):
-        ...  # pragma: no cover
+    def _onMDAFrame(self, img: np.ndarray, event: MDAEvent): ...  # pragma: no cover
 
     def _disconnect(self, engine: PMDAEngine):
         engine.events.sequenceStarted.disconnect(self._onMDAStarted)
