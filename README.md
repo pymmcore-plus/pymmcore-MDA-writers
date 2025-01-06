@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/ianhi/pymmcore-MDA-writers/branch/main/graph/badge.svg)](https://codecov.io/gh/ianhi/pymmcore-MDA-writers)
 
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > This experimental package is obsolete
 > `pymmcore-plus` now includes writers for ome-zarr, ome-tiff, and other scenarios by default
 
